@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UITableViewController {
+class ViewController: UITableViewController, DetailViewDelegate {
     
     var notes = [Note]()
     
@@ -17,8 +17,8 @@ class ViewController: UITableViewController {
         
         title = "Notes"
         navigationController?.navigationBar.prefersLargeTitles = true
-        
-        tabBarController?.tabBar.items?[0].title = "\(notes.count) Notes"
+            
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(createNote))
         
         let defaults = UserDefaults.standard
         
@@ -33,6 +33,10 @@ class ViewController: UITableViewController {
         }
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        tabBarController?.tabBar.items?[0].title = "\(notes.count) Notes"
+    }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return notes.count
     }
@@ -41,16 +45,18 @@ class ViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "noteCell", for: indexPath)
 
         let note = notes[indexPath.row]
-        cell.textLabel?.text = note.title
+        cell.textLabel?.text = note.body
         cell.detailTextLabel?.text = note.formatDate()
 
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        let vc = storyboard?.instantiateViewController(withIdentifier: "DetailView") as! DetailTableViewController
-//        vc.detailItem = continents[indexPath.row]
-//        navigationController?.pushViewController(vc, animated: true)
+        let vc = storyboard?.instantiateViewController(withIdentifier: "DetailView") as! DetailViewController
+        vc.delegate = self
+        vc.currentNote = notes[indexPath.row]
+        vc.noteIndex = indexPath.row
+        navigationController?.pushViewController(vc, animated: true)
     }
     
     func save() {
@@ -61,6 +67,19 @@ class ViewController: UITableViewController {
         } else {
             print("Failed to save notes.")
         }
+    }
+    
+    @objc func createNote() {
+         let vc = storyboard?.instantiateViewController(withIdentifier: "DetailView") as! DetailViewController
+        vc.delegate = self
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func saveToNotes(_ note: Note) {
+        notes.insert(note, at: 0)
+        
+        save()
+        self.tableView.reloadData()
     }
 
 
